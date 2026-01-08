@@ -1,0 +1,4354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardGames Hub - Play Offline & Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --checker-light: #f0d9b5;
+            --checker-dark: #b58863;
+            --chess-light: #f0d9b5;
+            --chess-dark: #b58863;
+            --ttt-light: #4a90e2;
+            --ttt-dark: #2c3e50;
+            --online-color: #9b59b6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 
+
+0.1);
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: #333;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+        }
+
+        .logo h1 {
+            font-family: 'Roboto Slab', serif;
+            font-size: 2.2rem;
+            color: var(--primary-color);
+        }
+
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .online {
+            background-color: rgba(155, 89, 182, 0.1);
+            color: var(--online-color);
+        }
+
+        .offline {
+            background-color: rgba(189, 195, 199, 0.3);
+            color: #7f8c8d;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .balance {
+            background-color: var(--success-color);
+
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-online {
+            background-color: var(--online-color);
+            color: white;
+        }
+
+        .btn-online:hover {
+            background-color: #8e44ad;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tabs {
+            display: flex;
+            list-style: none;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .nav-tabs li {
+
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-tabs a {
+            display: block;
+            padding: 18px 20px;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs a:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .nav-tabs a.active {
+
+            border-bottom: 4px solid var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+        /* Main Content */
+        .tab-content {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Introduction Section */
+        .intro-section {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+
+        .intro-section h2 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .intro-section p {
+            font-size: 1.1rem;
+            color: #555;
+
+            margin-bottom: 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background-color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+
+            transform: translateY(-10px);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        /* Game Boards */
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .game-board-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+
+        .game-controls {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: var(--border-radius);
+        }
+
+        .board {
+            display: grid;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 3px solid #444;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Checkers Board */
+        .checkers-board {
+
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            aspect-ratio: 1/1;
+        }
+
+        .checkers-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .checkers-light {
+            background-color: var(--checker-light);
+        }
+
+        .checkers-dark {
+            background-color: var(--checker-dark);
+
+        }
+
+        /* Chess Board */
+        .chess-board {
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            aspect-ratio: 1/1;
+        }
+
+        .chess-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .chess-light {
+            background-color: var(--chess-light);
+        }
+
+        .chess-dark {
+            background-color: var(--chess-dark);
+        }
+
+        /* Tic Tac Toe Board */
+        .ttt-board {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            aspect-ratio: 1/1;
+            max-width: 400px;
+        }
+
+        .ttt-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            border: 3px solid var(--ttt-dark);
+            font-size: 4rem;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .ttt-cell:nth-child(1),
+        .ttt-cell:nth-child(2),
+        .ttt-cell:nth-child(3) {
+            border-top: none;
+        }
+
+        .ttt-cell:nth-child(1),
+        .ttt-cell:nth-child(4),
+        .ttt-cell:nth-child(7) {
+            border-left: none;
+        }
+
+        .ttt-cell:nth-child(3),
+        .ttt-cell:nth-child(6),
+        .ttt-cell:nth-child(9) {
+            border-right: none;
+        }
+
+        .ttt-cell:nth-child(7),
+        .ttt-cell:nth-child(8),
+        .ttt-cell:nth-child(9) {
+            border-bottom: none;
+        }
+
+        /* Game Pieces */
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .piece:hover {
+            transform: scale(1.05);
+        }
+
+        .checker-piece-red {
+            background: radial-gradient(circle at 30% 30%, #e74c3c, #c0392b);
+        }
+
+        .checker-piece-black {
+            background: radial-gradient(circle at 30% 30%, #2c3e50, #1a252f);
+        }
+
+        .king::after {
+            content: "♔";
+            position: absolute;
+            color: gold;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 
+
+0.8);
+        }
+
+        .chess-piece {
+            width: 85%;
+            height: 85%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            cursor: pointer;
+        }
+
+        /* Possible moves indicator */
+        .possible-move {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-color: rgba(255, 235, 59, 0.7);
+            border-radius: 50%;
+            border: 2px solid #fbc02d;
+
+            z-index: 5;
+        }
+
+        /* Game Controls */
+        .game-title {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .level-selector, .game-mode {
+            margin-bottom: 25px;
+        }
+
+        .level-selector h3, .game-mode h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .levels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .level-btn {
+            padding: 8px 15px;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .level-btn:hover {
+            background-color: #d0d0d0;
+        }
+
+        .level-btn.active {
+
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+
+        .mode-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .online-mode-btn.active {
+            background-color: var(--online-color);
+            color: white;
+        }
+
+        .game-stats {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .game-stats h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Online Multiplayer Section */
+        .online-section {
+            display: flex;
+
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .create-game, .join-game {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: var(--border-radius);
+        }
+
+        .create-game h3, .join-game h3 {
+            margin-bottom: 20px;
+            color: var(--online-color);
+        }
+
+        .betting-options {
+            margin-top: 20px;
+        }
+
+
+        .bet-amount {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .bet-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .bet-btn.active {
+            background-color: var(--success-color);
+
+            color: white;
+        }
+
+        .game-code-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .game-code {
+            flex: 1;
+            padding: 12px;
+            background-color: white;
+            border: 2px dashed #ccc;
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+
+            padding: 12px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Registration Form */
+        .registration-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--secondary-color);
+
+            outline: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Deposit/Withdraw Section */
+        .transaction-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .transaction-tabs {
+            display: flex;
+            margin-bottom: 30px;
+
+            border-bottom: 2px solid #eee;
+        }
+
+        .transaction-tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #777;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .transaction-tab.active {
+            color: var(--secondary-color);
+        }
+
+        .transaction-tab.active::after {
+            content: '';
+            position: absolute;
+
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+        }
+
+        .transaction-form {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: var(--border-radius);
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(255, 255, 255, 0.95);
+            margin-top: 40px;
+            padding: 40px 0 20px;
+            border-radius: var(--border-radius);
+
+            box-shadow: var(--shadow);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul li a {
+            color: #555;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--secondary-color);
+        }
+
+        .contact-info li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copyright {
+
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.5s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Server Status */
+        .server-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .server-online {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-
+
+color);
+        }
+
+        .server-offline {
+            background-color: var(--accent-color);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .game-container, .online-section {
+                flex-direction: column;
+            }
+            
+            .board {
+                max-width: 100%;
+            }
+            
+            .form-row {
+                flex-direction: column;
+
+                gap: 0;
+            }
+            
+            .nav-tabs {
+                overflow-x: scroll;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        /* Hint Button */
+        .hint-btn {
+            background-color: var(--warning-color);
+            color: white;
+            margin-top: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hint-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Ad Modal */
+        .ad-modal .modal-content {
+            text-align: center;
+        }
+
+        .ad-container {
+            background-color: #f5f5f5;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            border: 2px dashed #ddd;
+        }
+
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 20px 0;
+        }
+
+        /* Game Lobby */
+        .game-lobby {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+
+        .lobby-players {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+
+        .player-card {
+            flex: 1;
+            background-color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .player-ready {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .player-waiting {
+            color: var(--warning-color);
+        }
+
+        /* Chat Container */
+
+        .chat-container {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chat-messages {
+            margin-bottom: 15px;
+        }
+
+        .chat-message {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+
+        .chat-message.self {
+
+            background-color: var(--secondary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-message.other {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid #c33;
+        }
+
+        /* Success Message */
+        .success-message {
+            background-color: #efe;
+            color: #3a3;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid #3a3;
+        }
+
+
+        /* Game Result Modal */
+        .result-modal .modal-content {
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .win-result {
+            color: var(--success-color);
+        }
+
+        .loss-result {
+            color: var(--accent-color);
+        }
+
+        .draw-result {
+            color: var(--warning-color);
+
+        }
+
+        .prize-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--success-color);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-dice"></i>
+                    <h1>BoardGames Hub</h1>
+                </div>
+                <div class="user-info">
+                    <div class="online-status 
+
+offline" id="onlineStatus">
+                        <span class="server-status" id="serverStatus"></span>
+                        <span id="statusText">Offline Mode</span>
+                    </div>
+                    <div class="balance" id="userBalance">$0.00</div>
+                    <button class="btn btn-primary" id="loginBtn">Login / Register</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <ul class="nav-tabs">
+                <li><a href="#home" class="active">Home</a></li>
+
+                <li><a href="#checkers">Checkers</a></li>
+                <li><a href="#chess">Chess</a></li>
+                <li><a href="#tictactoe">Tic-Tac-Toe</a></li>
+                <li><a href="#multiplayer">Multiplayer</a></li>
+                <li><a href="#account">Account</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#terms">Terms</a></li>
+                <li><a href="#privacy">Privacy</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Home Tab -->
+        <div id="home" class="tab-content active">
+            <div class="intro-section">
+                <h2>Welcome to BoardGames Hub</h2>
+                <p>Your ultimate destination for classic board games! Enjoy Checkers, Chess, and Tic-Tac-Toe with stunning graphics, multiple difficulty levels, and puzzles. Play offline against AI or go online for multiplayer matches and betting.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-chess-board"></i>
+
+                        <h3>Three Classic Games</h3>
+                        <p>Checkers, Chess, and Tic-Tac-Toe with official rules and multiple levels.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-robot"></i>
+                        <h3>Smart AI Opponents</h3>
+                        <p>10 difficulty levels for each game. Challenge yourself!</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Online Multiplayer</h3>
+                        <p>Play with friends or random opponents. Create games and share codes.</p>
+                    </div>
+                    <div class="feature-card">
+
+                        <i class="fas fa-coins"></i>
+                        <h3>Betting System</h3>
+                        <p>Deposit and withdraw using EcoCash. Bet on your matches (optional).</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px;">
+                    <h3>Get Started</h3>
+                    <p>Select a game from the menu to start playing. Register to access online features and track your progress.</p>
+                    <button class="btn btn-primary" style="margin-top: 20px;" id="startPlayingBtn">Start Playing Now</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Checkers Tab -->
+        <div id="checkers" class="tab-content">
+            <h2 class="game-title">Checkers</h2>
+            <div class="game-container">
+                <div class="game-board-container">
+                    <div class="board checkers-board" id="checkersBoard">
+                        <!-- Checkers board will be generated by JavaScript -->
+                    </div>
+                    <div id="checkersChat" class="chat-container" style="display: none;">
+                        <div class="chat-messages" id="checkersChatMessages"></div>
+                        <div class="chat-input-container">
+
+                            <input type="text" class="chat-input" id="checkersChatInput" placeholder="Type your message...">
+                            <button class="btn btn-primary" id="checkersSendMessage">Send</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-controls">
+                    <div class="game-mode">
+                        <h3>Game Mode</h3>
+                        <div class="mode-selector">
+                            <button class="mode-btn active" data-mode="ai">vs Computer</button>
+                            <button class="mode-btn" data-mode="local">Local 2 Player</button>
+                            <button class="mode-btn online-mode-btn" data-
+
+mode="online">Online</button>
+                        </div>
+                    </div>
+                    
+                    <div class="level-selector">
+                        <h3>Difficulty Level</h3>
+                        <div class="levels" id="checkersLevels">
+                            <!-- Levels 1-10 will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="newCheckersGame">New Game</button>
+                    <button class="btn hint-btn" id="checkersHintBtn" disabled>Get Hint (Watch Ad)</button>
+                    <button class="btn" id="checkersPuzzlesBtn">Puzzles</button>
+
+                    
+                    <div class="game-lobby" id="checkersLobby" style="display: none;">
+                        <h3>Game Lobby</h3>
+                        <div class="lobby-players">
+                            <div class="player-card">
+                                <h4>Player 1 (You)</h4>
+                                <p id="checkersPlayer1Status" class="player-ready">Ready</p>
+                            </div>
+                            <div class="player-card">
+                                <h4>Player 2</h4>
+                                <p id="checkersPlayer2Status" class="player-waiting">Waiting...</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="checkersReadyBtn" style="width: 100%; margin-top: 
+
+15px;">Ready</button>
+                    </div>
+                    
+                    <div class="game-stats">
+                        <h3>Game Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span>Player:</span>
+                                <span id="checkersPlayerColor">Red</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Turn:</span>
+                                <span id="checkersTurn">Red</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Red Pieces:</span>
+                                <span id="redPiecesCount">12</span>
+
+                            </div>
+                            <div class="stat-item">
+                                <span>Black Pieces:</span>
+                                <span id="blackPiecesCount">12</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Red Kings:</span>
+                                <span id="redKingsCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Black Kings:</span>
+                                <span id="blackKingsCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="game-rules" style="margin-top: 20px; font-size: 0.9rem; color: #666;">
+                        <h4>Game Rules:</h4>
+                        <ul style="padding-left: 20px;">
+                            <li>Pieces move diagonally forward</li>
+                            <li>Capture by jumping over opponent's pieces</li>
+                            <li>When a piece reaches the opponent's last row, it becomes a King</li>
+                            <li>Kings can move diagonally forward or backward</li>
+                            <li>Kings can capture in any diagonal direction</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Chess Tab -->
+        <div id="chess" class="tab-content">
+            <h2 class="game-title">Chess</h2>
+            <div class="game-container">
+                <div class="game-board-container">
+                    <div class="board chess-board" id="chessBoard">
+                        <!-- Chess board will be generated by JavaScript -->
+                    </div>
+                    <div id="chessChat" class="chat-container" style="display: none;">
+                        <div class="chat-messages" id="chessChatMessages"></div>
+                        <div class="chat-input-container">
+
+                            <input type="text" class="chat-input" id="chessChatInput" placeholder="Type your message...">
+                            <button class="btn btn-primary" id="chessSendMessage">Send</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-controls">
+                    <div class="game-mode">
+                        <h3>Game Mode</h3>
+                        <div class="mode-selector">
+                            <button class="mode-btn active" data-mode="ai">vs Computer</button>
+                            <button class="mode-btn" data-mode="local">Local 2 Player</button>
+                            <button class="mode-btn online-mode-btn" data-mode="online">Online</button>
+
+                        </div>
+                    </div>
+                    
+                    <div class="level-selector">
+                        <h3>Difficulty Level</h3>
+                        <div class="levels" id="chessLevels">
+                            <!-- Levels 1-10 will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="newChessGame">New Game</button>
+                    <button class="btn hint-btn" id="chessHintBtn" disabled>Get Hint (Watch Ad)</button>
+                    <button class="btn" id="chessPuzzlesBtn">Puzzles</button>
+                    
+                    <div class="game-lobby" 
+
+id="chessLobby" style="display: none;">
+                        <h3>Game Lobby</h3>
+                        <div class="lobby-players">
+                            <div class="player-card">
+                                <h4>Player 1 (You)</h4>
+                                <p id="chessPlayer1Status" class="player-ready">Ready</p>
+                            </div>
+                            <div class="player-card">
+                                <h4>Player 2</h4>
+                                <p id="chessPlayer2Status" class="player-waiting">Waiting...</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="chessReadyBtn" style="width: 100%; margin-top: 15px;">Ready</button>
+                    </div>
+                    
+
+                    <div class="game-stats">
+                        <h3>Game Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span>Player:</span>
+                                <span id="chessPlayerColor">White</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Turn:</span>
+                                <span id="chessTurn">White</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>White Pieces:</span>
+                                <span id="whitePiecesCount">16</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Black Pieces:</
+
+span>
+                                <span id="blackPiecesCount">16</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Check:</span>
+                                <span id="checkStatus">No</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Move Count:</span>
+                                <span id="chessMoveCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-rules" style="margin-top: 20px; font-size: 0.9rem; color: #666;">
+
+                        <h4>Standard Chess Rules:</h4>
+                        <ul style="padding-left: 20px;">
+                            <li>Each piece moves according to its specific rules</li>
+                            <li>Checkmate wins the game</li>
+                            <li>Stalemate results in a draw</li>
+                            <li>Castling, en passant, and pawn promotion are supported</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tic-Tac-Toe Tab -->
+        <div id="tictactoe" class="tab-content">
+
+            <h2 class="game-title">Tic-Tac-Toe</h2>
+            <div class="game-container">
+                <div class="game-board-container">
+                    <div class="board ttt-board" id="tttBoard">
+                        <!-- Tic-Tac-Toe board will be generated by JavaScript -->
+                    </div>
+                    <div id="tttChat" class="chat-container" style="display: none;">
+                        <div class="chat-messages" id="tttChatMessages"></div>
+                        <div class="chat-input-container">
+                            <input type="text" class="chat-input" id="tttChatInput" placeholder="Type your message...">
+                            <button class="btn btn-primary" id="tttSendMessage">Send</
+
+button>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-controls">
+                    <div class="game-mode">
+                        <h3>Game Mode</h3>
+                        <div class="mode-selector">
+                            <button class="mode-btn active" data-mode="ai">vs Computer</button>
+                            <button class="mode-btn" data-mode="local">Local 2 Player</button>
+                            <button class="mode-btn online-mode-btn" data-mode="online">Online</button>
+                        </div>
+                    </div>
+                    
+                    <div class="level-selector">
+                        <h3>Difficulty Level</h3>
+
+                        <div class="levels" id="tttLevels">
+                            <!-- Levels 1-10 will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="newTTTGame">New Game</button>
+                    <button class="btn hint-btn" id="tttHintBtn" disabled>Get Hint (Watch Ad)</button>
+                    
+                    <div class="game-lobby" id="tttLobby" style="display: none;">
+                        <h3>Game Lobby</h3>
+                        <div class="lobby-players">
+                            <div class="player-card">
+                                <h4>Player 1 (You)</h4>
+                                <p id="tttPlayer1Status" class="player-ready">Ready</p>
+
+                            </div>
+                            <div class="player-card">
+                                <h4>Player 2</h4>
+                                <p id="tttPlayer2Status" class="player-waiting">Waiting...</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="tttReadyBtn" style="width: 100%; margin-top: 15px;">Ready</button>
+                    </div>
+                    
+                    <div class="game-stats">
+                        <h3>Game Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span>Player:</span>
+                                <span id="tttPlayerSymbol">X</span>
+                            </div>
+                            <div class="stat-item">
+
+                                <span>Turn:</span>
+                                <span id="tttTurn">X</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Games Played:</span>
+                                <span id="tttGamesPlayed">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Wins:</span>
+                                <span id="tttWins">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Losses:</span>
+                                <span id="tttLosses">0</span>
+                            </div>
+                            <div class="stat-item">
+
+                                <span>Draws:</span>
+                                <span id="tttDraws">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiplayer Tab -->
+        <div id="multiplayer" class="tab-content">
+            <h2 class="game-title">Online Multiplayer & Betting</h2>
+            <p style="margin-bottom: 20px; color: #666;">Connect to the internet to play multiplayer games and participate in betting matches.</p>
+            
+            <div class="online-section">
+
+                <div class="create-game">
+                    <h3><i class="fas fa-plus-circle"></i> Create a Game</h3>
+                    <p>Create a new multiplayer game and invite friends to join.</p>
+                    
+                    <div class="form-group">
+                        <label for="gameType">Game Type</label>
+                        <select id="gameType" class="form-control">
+                            <option value="checkers">Checkers</option>
+                            <option value="chess">Chess</option>
+                            <option value="tictactoe">Tic-Tac-Toe</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+
+                        <label for="timeControl">Time Control (minutes)</label>
+                        <select id="timeControl" class="form-control">
+                            <option value="5">5 minutes</option>
+                            <option value="10" selected>10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="0">No time limit</option>
+                        </select>
+                    </div>
+                    
+                    <div class="betting-options">
+
+                        <h4>Betting (Optional)</h4>
+                        <p>Add a bet to make the game more exciting!</p>
+                        <div class="bet-amount">
+                            <button class="bet-btn active" data-amount="0">No Bet</button>
+                            <button class="bet-btn" data-amount="5">$5</button>
+                            <button class="bet-btn" data-amount="10">$10</button>
+                            <button class="bet-btn" data-amount="25">$25</button>
+                            <button class="bet-btn" data-amount="50">$50</button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-online" id="createGameBtn" style="width: 100%; margin-top: 20px;">
+                        <i class="fas fa-gamepad"></
+
+i> Create Game
+                    </button>
+                    
+                    <div id="gameCodeSection" style="display: none;">
+                        <h4 style="margin-top: 30px;">Your Game Code</h4>
+                        <p>Share this code with friends to join your game:</p>
+                        <div class="game-code-container">
+                            <div class="game-code" id="gameCodeDisplay">ABCD1234</div>
+                            <button class="copy-btn" id="copyCodeBtn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">Waiting for 
+
+opponent to join...</p>
+                        <div class="spinner" id="waitingSpinner" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="join-game">
+                    <h3><i class="fas fa-users"></i> Join a Game</h3>
+                    <p>Join an existing game using a game code.</p>
+                    
+                    <div class="form-group">
+                        <label for="joinGameCode">Game Code</label>
+                        <input type="text" id="joinGameCode" placeholder="Enter game code (e.g., ABCD1234)" maxlength="8">
+                    </div>
+
+                    
+                    <button class="btn btn-online" id="joinGameBtn" style="width: 100%;">
+                        <i class="fas fa-sign-in-alt"></i> Join Game
+                    </button>
+                    
+                    <div style="margin-top: 30px;">
+                        <h4>Public Games</h4>
+                        <p>Join a random public game:</p>
+                        <div id="publicGamesList" style="background-color: white; border-radius: var(--border-radius); padding: 15px; margin-top: 15px; min-height: 150px;">
+                            <div id="publicGamesLoading" class="spinner" style="display: none;"></div>
+                            <p style="color: #666; text-align: center;" id="noGamesMessage">No public games available. Connect to the 
+
+internet to see games.</p>
+                            <div id="publicGamesContent"></div>
+                        </div>
+                        <button class="btn" id="refreshGamesBtn" style="width: 100%; margin-top: 15px;">
+                            <i class="fas fa-sync-alt"></i> Refresh Games List
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 40px; background-color: #f8f9fa; padding: 25px; border-radius: var(--border-radius);">
+                <h3><i class="fas fa-coins"></i> Betting Balance & Transactions</h3>
+                <p>Manage your betting funds and transaction history.</p>
+
+                
+                <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px; background-color: white; padding: 20px; border-radius: var(--border-radius);">
+                        <h4>Current Balance</h4>
+                        <p style="font-size: 2rem; font-weight: bold; color: var(--success-color);" id="bettingBalance">$0.00</p>
+                    </div>
+                    <div style="flex: 1; min-width: 200px; background-color: white; padding: 20px; border-radius: var(--border-radius);">
+                        <h4>Total Winnings</h4>
+                        <p style="font-size: 2rem; font-weight: bold; color: var(--secondary-color);" id="totalWinnings">$0.00</p>
+                    </div>
+                    <div style="flex: 1; min-width: 200px; background-color: white; padding: 
+
+20px; border-radius: var(--border-radius);">
+                        <h4>Games Played</h4>
+                        <p style="font-size: 2rem; font-weight: bold; color: var(--online-color);" id="totalGames">0</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-primary" id="depositBtn">
+                        <i class="fas fa-money-bill-wave"></i> Deposit Funds
+                    </button>
+                    <button class="btn" id="withdrawBtn" style="margin-left: 10px;">
+                        <i class="fas fa-wallet"></i> Withdraw Funds
+                    </button>
+                    <button class="btn" id="transactionHistoryBtn" style="margin-left: 10px;">
+                        <i class="fas fa-history"></i> Transaction History
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Tab -->
+        <div id="account" class="tab-content">
+            <h2 class="game-title">Account Management</h2>
+            
+            <div class="registration-form" id="loginForm">
+                <h3>Login / Register</h3>
+                <p>Register with your Gmail and EcoCash number to access online features.</p>
+                
+                <div class="form-group">
+
+                    <label for="email">Email Address (Gmail)</label>
+                    <input type="email" id="email" placeholder="Enter your Gmail address">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ecocash">EcoCash Number</label>
+                    <input type="tel" id="ecocash" placeholder="Enter your EcoCash number">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Create a password">
+                </div>
+                
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password">
+                </div>
+                
+                <button class="btn btn-primary" id="registerBtn" style="width: 100%;">Register Account</button>
+                <p style="text-align: center; margin-top: 15px;">Already have an account? <a href="#" id="showLoginLink">Login here</a></p>
+            </div>
+            
+            <div class="transaction-section" id="transactionSection" style="display: none;">
+
+                <h3>Deposit & Withdraw Funds</h3>
+                
+                <div class="transaction-tabs">
+                    <button class="transaction-tab active" data-transaction="deposit">Deposit</button>
+                    <button class="transaction-tab" data-transaction="withdraw">Withdraw</button>
+                </div>
+                
+                <div class="transaction-form" id="depositForm">
+                    <div class="form-group">
+                        <label for="depositAmount">Amount ($)</label>
+                        <input type="number" id="depositAmount" placeholder="Enter amount to deposit" min="5" max="1000">
+                    </div>
+
+                    
+                    <div class="form-group">
+                        <label for="depositMethod">Payment Method</label>
+                        <select id="depositMethod" class="form-control">
+                            <option value="ecocash">EcoCash</option>
+                            <option value="creditcard">Credit Card</option>
+                            <option value="banktransfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ecocashDeposit">EcoCash Number</label>
+
+                        <input type="tel" id="ecocashDeposit" placeholder="Your EcoCash number" value="0786611803">
+                    </div>
+                    
+                    <button class="btn btn-primary" id="submitDepositBtn">Deposit Now</button>
+                </div>
+                
+                <div class="transaction-form" id="withdrawForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="withdrawAmount">Amount ($)</label>
+                        <input type="number" id="withdrawAmount" placeholder="Enter amount to withdraw" min="10" max="500">
+                    </div>
+                    
+                    <div class="form-group">
+
+                        <label for="withdrawMethod">Withdrawal Method</label>
+                        <select id="withdrawMethod" class="form-control">
+                            <option value="ecocash">EcoCash</option>
+                            <option value="bankaccount">Bank Account</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="withdrawEcocash">EcoCash Number</label>
+                        <input type="tel" id="withdrawEcocash" placeholder="Your EcoCash number" value="0786611803">
+                    </div>
+
+                    
+                    <button class="btn btn-secondary" id="submitWithdrawBtn">Withdraw Funds</button>
+                </div>
+            </div>
+            
+            <div id="accountInfo" style="display: none; margin-top: 30px;">
+                <h3>Account Information</h3>
+                <div style="background-color: #f8f9fa; padding: 25px; border-radius: var(--border-radius);">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span>Email:</span>
+                            <span id="displayEmail">user@example.com</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <span>EcoCash:</span>
+                            <span id="displayEcocash">0786611803</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Member Since:</span>
+                            <span id="memberSince">2023-01-01</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Total Games:</span>
+                            <span id="totalAccountGames">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Wins:</span>
+                            <span id="totalWins">0</span>
+
+                        </div>
+                        <div class="stat-item">
+                            <span>Losses:</span>
+                            <span id="totalLosses">0</span>
+                        </div>
+                    </div>
+                    <button class="btn" id="logoutBtn" style="margin-top: 20px;">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Tab -->
+        <div id="contact" class="tab-content">
+            <h2 class="game-title">Contact Us</h2>
+            <p style="margin-bottom: 30px;">Have questions, feedback, or need support? Reach out to us through any of 
+
+the following channels.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-envelope"></i>
+                    <h3>Email Support</h3>
+                    <p>For general inquiries and support:</p>
+                    <p><strong>madungweisaac0@gmail.com</strong></p>
+                    <p><strong>mobp255@gmail.com</strong></p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-phone"></i>
+                    <h3>Phone Support</h3>
+                    <p>Call us for immediate assistance:</p>
+                    <p><strong>+263 78 661 
+
+1803</strong></p>
+                    <p>Available Mon-Fri, 9AM-5PM</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-comments"></i>
+                    <h3>Live Chat</h3>
+                    <p>Chat with our support team in real-time (when available).</p>
+                    <button class="btn btn-primary" style="margin-top: 10px;" id="startChatBtn">Start Chat</button>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-question-circle"></i>
+                    <h3>FAQ & Help Center</h3>
+                    <p>Find answers to common questions and troubleshooting tips.</p>
+                    <button class="btn" 
+
+style="margin-top: 10px;" id="faqBtn">View FAQ</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 40px; background-color: #f8f9fa; padding: 30px; border-radius: var(--border-radius);">
+                <h3>Send Us a Message</h3>
+                <div class="form-group">
+                    <label for="contactName">Your Name</label>
+                    <input type="text" id="contactName" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="contactEmail">Your Email</label>
+                    <input type="email" id="contactEmail" placeholder="Enter your 
+
+email">
+                </div>
+                <div class="form-group">
+                    <label for="contactMessage">Message</label>
+                    <textarea id="contactMessage" rows="5" placeholder="Enter your message"></textarea>
+                </div>
+                <button class="btn btn-primary" id="sendMessageBtn">Send Message</button>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="about" class="tab-content">
+            <h2 class="game-title">About BoardGames Hub</h2>
+            
+            <div style="margin-bottom: 30px;">
+
+                <h3>Our Mission</h3>
+                <p>BoardGames Hub was created to bring classic board games to the digital world, making them accessible to everyone. We combine traditional gameplay with modern features like online multiplayer, AI opponents, and secure betting systems.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Features</h3>
+                <ul style="padding-left: 20px; margin-bottom: 20px;">
+                    <li><strong>Three Classic Games:</strong> Checkers, Chess, and Tic-Tac-Toe with official rules</li>
+                    <li><strong>Smart AI:</strong> 10 difficulty levels for each game</li>
+                    <li><strong>Puzzles:</strong> Challenge your skills with curated 
+
+puzzles</li>
+                    <li><strong>Online Multiplayer:</strong> Play with friends or random opponents worldwide</li>
+                    <li><strong>Secure Betting:</strong> Optional betting system with EcoCash integration</li>
+                    <li><strong>Offline Play:</strong> All games available without internet connection</li>
+                    <li><strong>Beautiful Design:</strong> Responsive UI with smooth animations</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Development Team</h3>
+                <p><strong>Created by Isaac Madungwe</strong></p>
+                <p>BoardGames Hub was 
+
+developed by Isaac Madungwe, bringing together expertise in game development, user interface design, and secure payment systems to create an engaging gaming platform.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Version Information</h3>
+                <p><strong>BoardGames Hub v3.0.0</strong></p>
+                <p><strong>Released:</strong> January 2026</p>
+                <p><strong>Last Updated:</strong> January 2026</p>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: var(--border-radius);">
+                <h3>Copyright Notice</h3>
+
+                <p>© 2026 BoardGames Hub. All rights reserved.</p>
+                <p>All content, including games, graphics, logos, and software, is the property of BoardGames Hub and is protected by international copyright laws.</p>
+                <p>Unauthorized copying, reproduction, or distribution of any content is strictly prohibited.</p>
+            </div>
+        </div>
+
+        <!-- Terms and Conditions Tab -->
+        <div id="terms" class="tab-content">
+            <h2 class="game-title">Terms and Conditions</h2>
+            
+            <div style="margin-bottom: 30px; background-color: #f8f9fa; padding: 25px; border-radius: var(--border-radius);">
+
+                <p><strong>Last Updated: January 2026</strong></p>
+                <p>These Terms and Conditions govern your use of BoardGames Hub. By accessing or using our platform, you agree to be bound by these terms.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>1. Acceptance of Terms</h3>
+                <p>By accessing and using BoardGames Hub, you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>2. User Accounts</h3>
+                <p>To access certain features, you must register for an account. You 
+
+agree to:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Provide accurate and complete information</li>
+                    <li>Maintain the security of your password</li>
+                    <li>Accept responsibility for all activities under your account</li>
+                    <li>Be at least 18 years old to use betting features</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>3. Betting and Financial Terms</h3>
+                <p>Our betting features are subject to the following conditions:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+
+                    <li>All betting is optional and requires explicit user consent</li>
+                    <li>Minimum deposit: $5, Minimum withdrawal: $10</li>
+                    <li>Withdrawals may take 24-48 hours to process</li>
+                    <li>We reserve the right to verify user identity for transactions</li>
+                    <li>Users are responsible for complying with local gambling laws</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>4. Game Rules and Fair Play</h3>
+                <p>All games on BoardGames Hub follow standard rules:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Checkers: Official 
+
+international rules apply</li>
+                    <li>Chess: Standard FIDE rules apply</li>
+                    <li>Tic-Tac-Toe: Traditional 3x3 grid rules</li>
+                    <li>Cheating, exploiting bugs, or using unauthorized software is prohibited</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>5. Intellectual Property</h3>
+                <p>All content, including games, graphics, logos, and software, is the property of BoardGames Hub or its licensors and is protected by copyright laws.</p>
+                <p>© 2026 BoardGames Hub. All rights reserved.</p>
+            </div>
+
+            
+            <div style="margin-bottom: 30px;">
+                <h3>6. Limitation of Liability</h3>
+                <p>BoardGames Hub is not liable for:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Any financial losses incurred through betting</li>
+                    <li>Service interruptions or technical issues</li>
+                    <li>User actions that violate these terms</li>
+                    <li>Content posted by other users</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>7. Termination</h3>
+                <p>We reserve the right to 
+
+suspend or terminate accounts that violate these Terms and Conditions. Users may terminate their accounts at any time through account settings.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>8. Changes to Terms</h3>
+                <p>We may update these Terms and Conditions periodically. Continued use of the service after changes constitutes acceptance of the new terms.</p>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: var(--border-radius); margin-top: 30px;">
+                <h3>Contact for Terms Inquiries</h3>
+                <p>For questions about these Terms and Conditions, contact us at:</p>
+
+                <p><strong>Email:</strong> madungweisaac0@gmail.com</p>
+                <p><strong>Phone:</strong> +263 78 661 1803</p>
+            </div>
+        </div>
+
+        <!-- Privacy Policy Tab -->
+        <div id="privacy" class="tab-content">
+            <h2 class="game-title">Privacy Policy</h2>
+            
+            <div style="margin-bottom: 30px; background-color: #f8f9fa; padding: 25px; border-radius: var(--border-radius);">
+                <p><strong>Last Updated: January 2026</strong></p>
+                <p>This Privacy Policy explains how BoardGames Hub collects, uses, and protects your personal information. We are committed to protecting your privacy and 
+
+ensuring transparency in our data practices.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>1. Information We Collect</h3>
+                <p>We collect the following information:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li><strong>Account Information:</strong> Email, password, EcoCash number</li>
+                    <li><strong>Game Data:</strong> Game history, scores, preferences</li>
+                    <li><strong>Financial Information:</strong> Deposit/withdrawal records (processed securely)</li>
+                    <li><strong>Technical Data:</
+
+strong> IP address, device type, browser information</li>
+                    <li><strong>Usage Data:</strong> Game play patterns, time spent, features used</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>2. How We Use Your Information</h3>
+                <p>We use collected information to:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Provide and improve our gaming services</li>
+                    <li>Process transactions and manage accounts</li>
+                    <li>Personalize your gaming experience</li>
+
+                    <li>Ensure platform security and prevent fraud</li>
+                    <li>Communicate important updates and promotions</li>
+                    <li>Comply with legal obligations</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>3. Data Sharing and Disclosure</h3>
+                <p>We do not sell your personal information. We may share data with:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li><strong>Payment Processors:</strong> Only for transaction processing</li>
+                    <li><strong>Service Providers:</strong> Hosting, analytics, customer 
+
+support</li>
+                    <li><strong>Legal Authorities:</strong> When required by law</li>
+                    <li><strong>Business Transfers:</strong> In case of merger or acquisition</li>
+                </ul>
+                <p>All third parties must maintain confidentiality and security standards.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>4. Data Security</h3>
+                <p>We implement industry-standard security measures:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Encryption of sensitive data</li>
+                    <li>Regular security audits</li>
+                    <li>Secure payment 
+
+processing</li>
+                    <li>Access controls and authentication</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>5. Your Rights</h3>
+                <p>You have the right to:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Access your personal data</li>
+                    <li>Correct inaccurate information</li>
+                    <li>Request deletion of your data</li>
+                    <li>Opt-out of marketing communications</li>
+                    <li>Export your game data</li>
+                </ul>
+
+                <p>To exercise these rights, contact us at madungweisaac0@gmail.com</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>6. Cookies and Tracking</h3>
+                <p>We use cookies to:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>Remember login sessions</li>
+                    <li>Analyze usage patterns</li>
+                    <li>Improve user experience</li>
+                    <li>Personalize content</li>
+                </ul>
+                <p>You can control cookies through your browser settings.</p>
+            </div>
+            
+
+            <div style="margin-bottom: 30px;">
+                <h3>7. Children's Privacy</h3>
+                <p>BoardGames Hub is not intended for children under 13. We do not knowingly collect data from children under 13. Betting features are restricted to users 18 and older.</p>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>8. Policy Updates</h3>
+                <p>We may update this Privacy Policy periodically. We will notify users of significant changes through email or platform notifications.</p>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: var(--border-radius); margin-top: 30px;">
+                <h3>Contact Information</h3>
+
+                <p>For privacy-related inquiries or requests:</p>
+                <p><strong>Email:</strong> madungweisaac0@gmail.com</p>
+                <p><strong>Phone:</strong> +263 78 661 1803</p>
+                <p><strong>Developer:</strong> Isaac Madungwe</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>BoardGames Hub</h3>
+                    <p>Your ultimate destination for classic board games. Play offline or online with friends.</p>
+
+                    <p>© 2026 BoardGames Hub. All rights reserved.</p>
+                    <p>Created by Isaac Madungwe</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#checkers">Checkers</a></li>
+                        <li><a href="#chess">Chess</a></li>
+                        <li><a href="#tictactoe">Tic-Tac-Toe</a></li>
+                        <li><a href="#multiplayer">Multiplayer</a></li>
+                    </ul>
+                </div>
+
+                
+                <div class="footer-section">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#terms">Terms & Conditions</a></li>
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section contact-info">
+                    <h3>Contact Info</h3>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> 
+
+madungweisaac0@gmail.com</li>
+                        <li><i class="fas fa-envelope"></i> mobp255@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0786611803</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Harare, Zimbabwe</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>BoardGames Hub © 2026 - Created by Isaac Madungwe - Play Classic Games Anytime, Anywhere</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Ad Modal -->
+    <div class="modal ad-modal" 
+
+id="adModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeAdModal">&times;</span>
+            <h2>Watch Ad for Hint</h2>
+            <p>Watch a short ad to unlock a hint for your current game.</p>
+            
+            <div class="ad-container">
+                <h3>Advertisement</h3>
+                <p>This would be a video ad in a real implementation</p>
+                <div class="countdown" id="adCountdown">5</div>
+                <p>Ad will finish in <span id="countdownSeconds">5</span> seconds</p>
+            </div>
+            
+            <button class="btn btn-primary" id="skipAdBtn" style="margin-top: 
+
+20px;">Skip Ad (Demo)</button>
+        </div>
+    </div>
+
+    <!-- Game Code Modal -->
+    <div class="modal" id="gameCodeModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeGameCodeModal">&times;</span>
+            <h2>Game Created Successfully!</h2>
+            <p>Your multiplayer game has been created. Share the code below with your friends to join:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <div style="font-size: 2.5rem; font-weight: bold; letter-spacing: 5px; color: 
+
+var(--online-color); padding: 20px; background-color: #f5f5f5; border-radius: var(--border-radius);" id="modalGameCode">ABCD1234</div>
+            </div>
+            
+            <div class="game-code-container">
+                <div class="game-code" id="modalCodeDisplay">ABCD1234</div>
+                <button class="copy-btn" id="modalCopyCodeBtn">
+                    <i class="fas fa-copy"></i> Copy Code
+                </button>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; color: #666;">Waiting for opponent to join...</p>
+            <div class="spinner" id="modalWaitingSpinner"></div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" id="startGameAnywayBtn">Start Game vs AI</button>
+                <button class="btn" id="cancelGameBtn" style="margin-left: 10px;">Cancel Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeLoginModal">&times;</span>
+            <h2>Login to Your Account</h2>
+            
+            <div class="form-group">
+                <label for="loginEmail">Email 
+
+Address</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email">
+            </div>
+            
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password">
+            </div>
+            
+            <button class="btn btn-primary" id="submitLoginBtn" style="width: 100%;">Login</button>
+            <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" id="showRegisterLink">Register here</a></p>
+
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeSuccessModal">&times;</span>
+            <div style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success-color); margin-bottom: 20px;"></i>
+                <h2 id="successTitle">Success!</h2>
+                <p id="successMessage">Operation completed successfully.</p>
+                <button class="btn btn-primary" id="successOkBtn" style="margin-top: 20px;">OK</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Game Result Modal -->
+    <div class="modal result-modal" id="gameResultModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeResultModal">&times;</span>
+            <div style="text-align: center;">
+                <div class="result-icon">
+                    <i class="fas fa-trophy win-result" id="resultIcon"></i>
+                </div>
+                <h2 id="resultTitle">Game Over!</h2>
+                <p id="resultMessage">The game has ended.</p>
+                <div id="prizeContainer" style="display: none;">
+                    <p>You won:</p>
+
+                    <div class="prize-amount" id="prizeAmount">$0.00</div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-primary" id="rematchBtn">Play Again</button>
+                    <button class="btn" id="returnToLobbyBtn" style="margin-left: 10px;">Return to Lobby</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000/api' 
+            : 'https://your-backend-domain.com/api';
+
+        
+        const SOCKET_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:5000'
+            : 'https://your-backend-domain.com';
+        
+        // Global variables
+        let currentGame = null;
+        let currentTab = 'home';
+        let user = null;
+        let userBalance = 0;
+        let isOnline = false;
+        let socket = null;
+        let gameModes = {};
+        let selectedLevels = {};
+        let hintAvailable = true;
+        let currentMultiplayerGame = null;
+        let activeGameType = null;
+        
+        // Initialize the application
+        
+
+document.addEventListener('DOMContentLoaded', function() {
+            // Initialize UI
+            initNavigation();
+            initGames();
+            initEventListeners();
+            initUserData();
+            checkOnlineStatus();
+            
+            // Show home tab by default
+            showTab('home');
+            
+            // Initialize socket connection
+            initSocketConnection();
+        });
+        
+        // Initialize Socket.io connection
+        function initSocketConnection() {
+            if (!isOnline) return;
+            
+            try {
+
+                socket = io(SOCKET_URL, {
+                    transports: ['websocket', 'polling'],
+                    withCredentials: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000
+                });
+                
+                socket.on('connect', () => {
+                    console.log('Connected to game server');
+                    updateOnlineStatus(true);
+                    
+                    // Authenticate socket if user is logged in
+                    const token = localStorage.getItem('token');
+                    if (token && user) {
+                        socket.emit('authenticate', { token, userId: user._id });
+                    }
+
+                });
+                
+                socket.on('disconnect', () => {
+                    console.log('Disconnected from game server');
+                    updateOnlineStatus(false);
+                });
+                
+                socket.on('connect_error', (error) => {
+                    console.error('Socket connection error:', error);
+                    updateOnlineStatus(false);
+                });
+                
+                // Game events
+                socket.on('playerJoined', handlePlayerJoined);
+                socket.on('playerStatus', handlePlayerStatus);
+                socket.on('gameStarted', 
+
+handleGameStarted);
+                socket.on('moveMade', handleMoveMade);
+                socket.on('newMessage', handleNewMessage);
+                socket.on('drawOffered', handleDrawOffered);
+                socket.on('gameEnded', handleGameEnded);
+                socket.on('playerDisconnected', handlePlayerDisconnected);
+                socket.on('error', handleSocketError);
+                
+            } catch (error) {
+                console.error('Failed to initialize socket:', error);
+            }
+        }
+        
+        // Socket event handlers
+
+        function handlePlayerJoined(data) {
+            console.log('Player joined:', data);
+            if (currentMultiplayerGame && data.game.gameCode === currentMultiplayerGame.gameCode) {
+                updateGameLobby(data);
+            }
+        }
+        
+        function handlePlayerStatus(data) {
+            console.log('Player status:', data);
+            updatePlayerStatus(data);
+        }
+        
+        function handleGameStarted(data) {
+            console.log('Game started:', data);
+            startMultiplayerGame(data);
+        }
+        
+        function handleMoveMade(data) {
+            console.log('Move made:', data);
+
+            updateGameBoard(data);
+        }
+        
+        function handleNewMessage(data) {
+            console.log('New message:', data);
+            addChatMessage(data.userId, data.message, data.timestamp, data.userId !== user._id);
+        }
+        
+        function handleDrawOffered(data) {
+            console.log('Draw offered:', data);
+            if (confirm('Your opponent has offered a draw. Do you accept?')) {
+                socket.emit('acceptDraw', { gameCode: currentMultiplayerGame.gameCode, userId: user._id });
+            }
+        }
+        
+
+        function handleGameEnded(data) {
+            console.log('Game ended:', data);
+            endMultiplayerGame(data);
+        }
+        
+        function handlePlayerDisconnected(data) {
+            console.log('Player disconnected:', data);
+            showNotification('Opponent disconnected. You win!', 'success');
+            endMultiplayerGame({ result: 'win', winner: user._id });
+        }
+        
+        function handleSocketError(data) {
+            console.error('Socket error:', data);
+            showNotification(data.message || 'Connection error', 'error');
+        }
+        
+
+        // Update online status
+        function updateOnlineStatus(connected) {
+            const statusElement = document.getElementById('onlineStatus');
+            const statusText = document.getElementById('statusText');
+            const serverStatus = document.getElementById('serverStatus');
+            
+            if (connected) {
+                statusElement.classList.remove('offline');
+                statusElement.classList.add('online');
+                statusText.textContent = 'Online Mode';
+                serverStatus.className = 'server-status server-online';
+                isOnline = true;
+            } else {
+
+                statusElement.classList.remove('online');
+                statusElement.classList.add('offline');
+                statusText.textContent = 'Offline Mode';
+                serverStatus.className = 'server-status server-offline';
+                isOnline = false;
+            }
+            
+            updateOnlineFeatures();
+        }
+        
+        // Update online features availability
+        function updateOnlineFeatures() {
+            const onlineButtons = document.querySelectorAll('.online-mode-btn, .btn-online');
+            
+            onlineButtons.forEach(btn => {
+
+                if (isOnline && user) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                }
+            });
+        }
+        
+        // Navigation functionality
+        function initNavigation() {
+            // Tab switching
+            const navLinks = document.querySelectorAll('.nav-tabs a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('href').substring(1);
+
+                    
+                    // Update active tab
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected tab
+                    showTab(tabId);
+                });
+            });
+            
+            // Start playing button
+            document.getElementById('startPlayingBtn').addEventListener('click', function() {
+                document.querySelector('.nav-tabs a[href="#checkers"]').click();
+            });
+        }
+        
+        // Show tab content
+
+        function showTab(tabId) {
+            // Hide all tab content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            const tabElement = document.getElementById(tabId);
+            if (tabElement) {
+                tabElement.classList.add('active');
+                currentTab = tabId;
+                
+                // Update game displays if needed
+                if (tabId === 'checkers') {
+                    renderCheckersBoard();
+                } else if (tabId === 'chess') {
+                    renderChessBoard();
+                } else if (tabId === 'tictactoe') {
+                    renderTTTBoard();
+
+                } else if (tabId === 'multiplayer') {
+                    loadPublicGames();
+                }
+            }
+        }
+        
+        // Initialize games
+        function initGames() {
+            // Initialize game modes
+            gameModes = {
+                checkers: 'ai',
+                chess: 'ai',
+                tictactoe: 'ai'
+            };
+            
+            // Initialize selected levels
+            selectedLevels = {
+                checkers: 1,
+                chess: 1,
+                tictactoe: 1
+            };
+
+            
+            // Create level buttons for each game
+            createLevelButtons('checkersLevels', 'checkers');
+            createLevelButtons('chessLevels', 'chess');
+            createLevelButtons('tttLevels', 'tictactoe');
+            
+            // Initialize game boards
+            initCheckersGame();
+            initChessGame();
+            initTTTGame();
+        }
+        
+        // Create level buttons
+        function createLevelButtons(containerId, gameType) {
+
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.createElement('button');
+                btn.className = `level-btn ${i === 1 ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.dataset.level = i;
+                btn.dataset.game = gameType;
+                
+                btn.addEventListener('click', function() {
+                    // Update active button
+                    document.querySelectorAll(`#${containerId} .level-btn`).forEach(b => {
+                        b.classList.remove('active');
+
+                    });
+                    this.classList.add('active');
+                    
+                    // Update selected level
+                    selectedLevels[gameType] = parseInt(this.dataset.level);
+                    
+                    // Start new game with selected level
+                    if (gameType === 'checkers') {
+                        initCheckersGame();
+                    } else if (gameType === 'chess') {
+                        initChessGame();
+                    } else if (gameType === 'tictactoe') {
+                        initTTTGame();
+                    }
+                });
+                
+                container.appendChild(btn);
+
+            }
+        }
+        
+        // Initialize Checkers game
+        function initCheckersGame() {
+            // Initialize checkers board
+            renderCheckersBoard();
+            
+            // Update stats
+            updateCheckersStats();
+            
+            // Reset game mode
+            resetGameMode('checkers');
+        }
+        
+        // Render checkers board
+        function renderCheckersBoard() {
+            const board = document.getElementById('checkersBoard');
+            if (!board) return;
+
+            
+            board.innerHTML = '';
+            
+            // Create 8x8 board
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = `checkers-cell ${(row + col) % 2 === 0 ? 'checkers-light' : 'checkers-dark'}`;
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Add pieces for starting positions
+                    if ((row + col) % 2 !== 0) {
+                        if (row < 3) {
+                            // Black pieces at top
+                            const piece = document.createElement('div');
+
+                            piece.className = 'piece checker-piece-black';
+                            piece.dataset.type = 'checker';
+                            piece.dataset.player = 'black';
+                            piece.dataset.row = row;
+                            piece.dataset.col = col;
+                            cell.appendChild(piece);
+                        } else if (row > 4) {
+                            // Red pieces at bottom
+                            const piece = document.createElement('div');
+                            piece.className = 'piece checker-piece-red';
+                            piece.dataset.type = 'checker';
+                            piece.dataset.player = 'red';
+                            piece.dataset.row = row;
+                            piece.dataset.col = col;
+                            cell.appendChild(piece);
+
+                        }
+                    }
+                    
+                    // Add click event for piece selection/movement
+                    cell.addEventListener('click', function() {
+                        handleCheckersCellClick(row, col, cell);
+                    });
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+        
+        // Handle checkers cell click
+        function handleCheckersCellClick(row, col, cell) {
+            console.log(`Checkers cell clicked: ${row}, ${col}`);
+
+            
+            // Clear previous move indicators
+            clearMoveIndicators();
+            
+            // For demo purposes, add a visual indicator
+            const indicator = document.createElement('div');
+            indicator.className = 'possible-move';
+            cell.appendChild(indicator);
+            
+            // If playing online multiplayer, send move
+            if (gameModes.checkers === 'online' && currentMultiplayerGame && socket) {
+                const move = {
+                    from: { row: row - 1, col: col - 1 }, // Example move
+                    to: { row, col },
+
+                    piece: 'checker'
+                };
+                
+                socket.emit('makeMove', {
+                    gameCode: currentMultiplayerGame.gameCode,
+                    userId: user._id,
+                    move: move
+                });
+            }
+        }
+        
+        // Clear move indicators
+        function clearMoveIndicators() {
+            document.querySelectorAll('.possible-move').forEach(indicator => {
+                indicator.remove();
+            });
+        }
+        
+
+        // Update checkers stats
+        function updateCheckersStats() {
+            // Demo stats
+            const playerColor = Math.random() > 0.5 ? 'Red' : 'Black';
+            document.getElementById('checkersPlayerColor').textContent = playerColor;
+            document.getElementById('checkersTurn').textContent = playerColor;
+            document.getElementById('redPiecesCount').textContent = '12';
+            document.getElementById('blackPiecesCount').textContent = '12';
+            document.getElementById('redKingsCount').textContent = '0';
+            
+
+document.getElementById('blackKingsCount').textContent = '0';
+        }
+        
+        // Initialize Chess game
+        function initChessGame() {
+            // Initialize chess board
+            renderChessBoard();
+            
+            // Update stats
+            updateChessStats();
+            
+            // Reset game mode
+            resetGameMode('chess');
+        }
+        
+        // Render chess board
+        function renderChessBoard() {
+            const board = document.getElementById('chessBoard');
+            if (!board) return;
+
+            
+            board.innerHTML = '';
+            
+            // Create 8x8 board
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = `chess-cell ${(row + col) % 2 === 0 ? 'chess-light' : 'chess-dark'}`;
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Add chess pieces for starting positions (simplified for demo)
+                    if (row === 0 || row === 7) {
+                        // Back row pieces
+                        const piece = document.createElement('div');
+                        piece.className = 'chess-piece';
+                        piece.style.backgroundColor = row === 0 ? '#2c3e50' : '#ecf0f1';
+                        piece.style.borderRadius = '50%';
+                        piece.dataset.player = row === 0 ? 'black' : 'white';
+                        piece.dataset.row = row;
+                        piece.dataset.col = col;
+                        
+                        // Add piece type indicator
+                        const pieceTypes = ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'];
+                        if (row === 0) {
+                            piece.textContent = pieceTypes[col];
+                            piece.style.color = 'white';
+                        } else {
+                            piece.textContent = pieceTypes[col];
+                            piece.style.color = 
+
+'#2c3e50';
+                        }
+                        
+                        cell.appendChild(piece);
+                    } else if (row === 1 || row === 6) {
+                        // Pawns
+                        const piece = document.createElement('div');
+                        piece.className = 'piece';
+                        piece.style.backgroundColor = row === 1 ? '#2c3e50' : '#ecf0f1';
+                        piece.dataset.player = row === 1 ? 'black' : 'white';
+                        piece.dataset.type = 'pawn';
+                        piece.dataset.row = row;
+                        piece.dataset.col = col;
+                        cell.appendChild(piece);
+                    }
+                    
+                    // Add click event for piece 
+
+selection/movement
+                    cell.addEventListener('click', function() {
+                        handleChessCellClick(row, col, cell);
+                    });
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+        
+        // Handle chess cell click
+        function handleChessCellClick(row, col, cell) {
+            console.log(`Chess cell clicked: ${row}, ${col}`);
+            
+            // Clear previous move indicators
+            clearMoveIndicators();
+            
+
+            // Add a possible move indicator (demo)
+            const indicator = document.createElement('div');
+            indicator.className = 'possible-move';
+            cell.appendChild(indicator);
+            
+            // If playing online multiplayer, send move
+            if (gameModes.chess === 'online' && currentMultiplayerGame && socket) {
+                const move = {
+                    from: { row: row - 1, col: col - 1 }, // Example move
+                    to: { row, col },
+                    piece: 'pawn'
+                };
+                
+                socket.emit('makeMove', {
+                    gameCode: 
+
+currentMultiplayerGame.gameCode,
+                    userId: user._id,
+                    move: move
+                });
+            }
+        }
+        
+        // Update chess stats
+        function updateChessStats() {
+            // Demo stats
+            document.getElementById('chessPlayerColor').textContent = 'White';
+            document.getElementById('chessTurn').textContent = 'White';
+            document.getElementById('whitePiecesCount').textContent = '16';
+            document.getElementById('blackPiecesCount').textContent = '16';
+            document.getElementById('checkStatus').textContent = 'No';
+            document.getElementById('chessMoveCount').textContent = '0';
+        }
+        
+        // Initialize Tic-Tac-Toe game
+        function initTTTGame() {
+            // Initialize TTT board
+            renderTTTBoard();
+            
+            // Update stats
+            updateTTTStats();
+            
+            // Reset game mode
+            resetGameMode('tictactoe');
+        }
+        
+
+        // Render Tic-Tac-Toe board
+        function renderTTTBoard() {
+            const board = document.getElementById('tttBoard');
+            if (!board) return;
+            
+            board.innerHTML = '';
+            
+            // Create 3x3 board
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'ttt-cell';
+                cell.dataset.index = i;
+                
+                // Add click event for cell selection
+                cell.addEventListener('click', function() {
+                    handleTTTCellClick(i, cell);
+                });
+                
+
+                board.appendChild(cell);
+            }
+        }
+        
+        // Handle TTT cell click
+        function handleTTTCellClick(index, cell) {
+            console.log(`TTT cell clicked: ${index}`);
+            
+            // For demo, alternate between X and O
+            const currentTurn = document.getElementById('tttTurn').textContent;
+            
+            if (!cell.textContent) {
+                cell.textContent = currentTurn;
+                cell.style.color = currentTurn === 'X' ? '#4a90e2' : '#e74c3c';
+                
+
+                // Switch turn
+                document.getElementById('tttTurn').textContent = currentTurn === 'X' ? 'O' : 'X';
+                
+                // Update game stats
+                updateTTTStats();
+                
+                // If playing online multiplayer, send move
+                if (gameModes.tictactoe === 'online' && currentMultiplayerGame && socket) {
+                    const move = {
+                        from: null,
+                        to: { index: index },
+                        piece: currentTurn
+                    };
+                    
+                    socket.emit('makeMove', {
+                        gameCode: 
+
+currentMultiplayerGame.gameCode,
+                        userId: user._id,
+                        move: move
+                    });
+                }
+                
+                // Simulate AI move if playing against computer
+                if (gameModes.tictactoe === 'ai' && document.getElementById('tttTurn').textContent === 'O') {
+                    setTimeout(makeAIMove, 500);
+                }
+            }
+        }
+        
+        // Make AI move for TTT
+        function makeAIMove() {
+            const cells = document.querySelectorAll('.ttt-cell');
+
+            const emptyCells = [];
+            
+            cells.forEach((cell, index) => {
+                if (!cell.textContent) {
+                    emptyCells.push(index);
+                }
+            });
+            
+            if (emptyCells.length > 0) {
+                const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                const cell = cells[emptyCells[randomIndex]];
+                
+                cell.textContent = 'O';
+                cell.style.color = '#e74c3c';
+                
+                // Switch back to player's turn
+                document.getElementById('tttTurn').textCo
+
+ntent = 'X';
+                
+                // Update game stats
+                updateTTTStats();
+                
+                // Check for win
+                checkTTTGameEnd();
+            }
+        }
+        
+        // Check TTT game end
+        function checkTTTGameEnd() {
+            const cells = document.querySelectorAll('.ttt-cell');
+            const board = [
+                [cells[0].textContent, cells[1].textContent, cells[2].textContent],
+                [cells[3].textContent, cells[4].textContent, cells[5].textContent],
+                [cells[6].textContent, cells[7].textContent, cells[8].textContent]
+
+            ];
+            
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
+                    showGameResult(board[i][0] === 'X' ? 'win' : 'loss', 'Tic-Tac-Toe');
+                    return;
+                }
+            }
+            
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] && board[0][i] === board[1][i] && board[1][i] === board[2][i]) {
+                    showGameResult(board[0][i] === 'X' ? 'win' : 'loss', 'Tic-Tac-Toe');
+                    return;
+                }
+            }
+
+            
+            // Check diagonals
+            if (board[0][0] && board[0][0] === board[1][1] && board[1][1] === board[2][2]) {
+                showGameResult(board[0][0] === 'X' ? 'win' : 'loss', 'Tic-Tac-Toe');
+                return;
+            }
+            
+            if (board[0][2] && board[0][2] === board[1][1] && board[1][1] === board[2][0]) {
+                showGameResult(board[0][2] === 'X' ? 'win' : 'loss', 'Tic-Tac-Toe');
+                return;
+            }
+            
+            // Check for draw
+            if (Array.from(cells).every(cell => cell.textContent)) {
+                showGameResult('draw', 'Tic-Tac-Toe');
+
+            }
+        }
+        
+        // Update TTT stats
+        function updateTTTStats() {
+            // Demo stats
+            document.getElementById('tttPlayerSymbol').textContent = 'X';
+            document.getElementById('tttGamesPlayed').textContent = '5';
+            document.getElementById('tttWins').textContent = '3';
+            document.getElementById('tttLosses').textContent = '1';
+            document.getElementById('tttDraws').textContent = '1';
+
+        }
+        
+        // Reset game mode when starting new game
+        function resetGameMode(gameType) {
+            // Hide multiplayer lobby and chat
+            document.getElementById(`${gameType}Lobby`).style.display = 'none';
+            document.getElementById(`${gameType}Chat`).style.display = 'none';
+            
+            // Reset game mode to AI if was online
+            if (gameModes[gameType] === 'online') {
+                gameModes[gameType] = 'ai';
+                updateModeButtons(gameType, 'ai');
+            }
+        }
+        
+
+        // Update mode buttons
+        function updateModeButtons(gameType, mode) {
+            const buttons = document.querySelectorAll(`#${gameType} .mode-btn`);
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Initialize event listeners
+        function initEventListeners() {
+            // New game buttons
+            document.getElementById('newCheckersGame').addEventListener('click', () => initCheckersGame());
+
+            document.getElementById('newChessGame').addEventListener('click', () => initChessGame());
+            document.getElementById('newTTTGame').addEventListener('click', () => initTTTGame());
+            
+            // Game mode buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mode = this.dataset.mode;
+                    const gameContainer = this.closest('.game-container');
+                    const gameId = gameContainer.parentElement.id;
+                    const gameType = gameId; // checkers, chess, or tictactoe
+                    
+                    // Update active button
+                    this.parentElement.querySelectorAll('.mode-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Update game mode
+                    gameModes[gameType] = mode;
+                    
+                    // Handle online mode
+                    if (mode === 'online') {
+                        if (!isOnline) {
+                            showOfflineWarning();
+                            // Switch back to AI mode
+                            this.classList.remove('active');
+
+                            gameModes[gameType] = 'ai';
+                            this.parentElement.querySelector('.mode-btn[data-mode="ai"]').classList.add('active');
+                            return;
+                        }
+                        
+                        if (!user) {
+                            showLoginModal();
+                            this.classList.remove('active');
+                            gameModes[gameType] = 'ai';
+                            this.parentElement.querySelector('.mode-btn[data-mode="ai"]').classList.add('active');
+                            return;
+                        }
+                        
+                        // Show multiplayer tab
+
+                        document.querySelector('.nav-tabs a[href="#multiplayer"]').click();
+                        showNotification('Please create or join a multiplayer game from the Multiplayer tab', 'info');
+                    }
+                });
+            });
+            
+            // Hint buttons
+            document.getElementById('checkersHintBtn').addEventListener('click', () => showAdForHint('checkers'));
+            document.getElementById('chessHintBtn').addEventListener('click', () => showAdForHint('chess'));
+            document.getElementById('tttHintBtn').add
+
+EventListener('click', () => showAdForHint('tictactoe'));
+            
+            // Puzzle buttons
+            document.getElementById('checkersPuzzlesBtn').addEventListener('click', () => showPuzzles('checkers'));
+            document.getElementById('chessPuzzlesBtn').addEventListener('click', () => showPuzzles('chess'));
+            
+            // Ready buttons for multiplayer
+            document.getElementById('checkersReadyBtn').addEventListener('click', () => playerReady('checkers'));
+            document.getElementById('chessReadyBtn').addEventListener('click', () => 
+
+playerReady('chess'));
+            document.getElementById('tttReadyBtn').addEventListener('click', () => playerReady('tictactoe'));
+            
+            // Chat send buttons
+            document.getElementById('checkersSendMessage').addEventListener('click', () => sendChatMessage('checkers'));
+            document.getElementById('chessSendMessage').addEventListener('click', () => sendChatMessage('chess'));
+            document.getElementById('tttSendMessage').addEventListener('click', () => sendChatMessage('tictactoe'));
+            
+            // Chat input enter key
+
+            ['checkers', 'chess', 'tictactoe'].forEach(game => {
+                const input = document.getElementById(`${game}ChatInput`);
+                if (input) {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            sendChatMessage(game);
+                        }
+                    });
+                }
+            });
+            
+            // Login/Register buttons
+            document.getElementById('loginBtn').addEventListener('click', showLoginModal);
+            document.getElementById('registerBtn').ad
+
+dEventListener('click', registerUser);
+            document.getElementById('submitLoginBtn').addEventListener('click', loginUser);
+            document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+            document.getElementById('showLoginLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showLoginModal();
+            });
+            document.getElementById('showRegisterLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginModal').style.display = 'none';
+                
+
+document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('transactionSection').style.display = 'none';
+                document.getElementById('accountInfo').style.display = 'none';
+            });
+            
+            // Deposit/Withdraw buttons
+            document.getElementById('depositBtn').addEventListener('click', showDepositForm);
+            document.getElementById('withdrawBtn').addEventListener('click', showWithdrawForm);
+            document.getElementById('submitDepositBtn').addEventListener('click', 
+
+processDeposit);
+            document.getElementById('submitWithdrawBtn').addEventListener('click', processWithdrawal);
+            
+            // Transaction tabs
+            document.querySelectorAll('.transaction-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const transactionType = this.dataset.transaction;
+                    
+                    // Update active tab
+                    document.querySelectorAll('.transaction-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    
+                    // Show corresponding form
+                    if (transactionType === 'deposit') {
+                        document.getElementById('depositForm').style.display = 'block';
+                        document.getElementById('withdrawForm').style.display = 'none';
+                    } else {
+                        document.getElementById('depositForm').style.display = 'none';
+                        document.getElementById('withdrawForm').style.display = 'block';
+                    }
+                });
+            });
+            
+
+            // Multiplayer buttons
+            document.getElementById('createGameBtn').addEventListener('click', createMultiplayerGame);
+            document.getElementById('joinGameBtn').addEventListener('click', joinMultiplayerGame);
+            document.getElementById('copyCodeBtn').addEventListener('click', copyGameCode);
+            document.getElementById('refreshGamesBtn').addEventListener('click', loadPublicGames);
+            document.getElementById('modalCopyCodeBtn').addEventListener('click', copyGameCode);
+            
+
+document.getElementById('startGameAnywayBtn').addEventListener('click', startGameWithAI);
+            document.getElementById('cancelGameBtn').addEventListener('click', cancelMultiplayerGame);
+            
+            // Betting amount buttons
+            document.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+
+            // Contact form
+            document.getElementById('sendMessageBtn').addEventListener('click', sendContactMessage);
+            
+            // Modal close buttons
+            document.getElementById('closeAdModal').addEventListener('click', () => {
+                document.getElementById('adModal').style.display = 'none';
+            });
+            document.getElementById('closeGameCodeModal').addEventListener('click', () => {
+                document.getElementById('gameCodeModal').style.display = 'none';
+                cancelMultiplayerGame();
+
+            });
+            document.getElementById('closeLoginModal').addEventListener('click', () => {
+                document.getElementById('loginModal').style.display = 'none';
+            });
+            document.getElementById('closeSuccessModal').addEventListener('click', () => {
+                document.getElementById('successModal').style.display = 'none';
+            });
+            document.getElementById('successOkBtn').addEventListener('click', () => {
+                document.getElementById('successModal').style.display = 'none';
+
+            });
+            document.getElementById('closeResultModal').addEventListener('click', () => {
+                document.getElementById('gameResultModal').style.display = 'none';
+            });
+            
+            // Skip ad button
+            document.getElementById('skipAdBtn').addEventListener('click', function() {
+                // In a real implementation, this would only work after watching the ad
+                document.getElementById('adModal').style.display = 'none';
+                grantHint();
+            });
+            
+
+            // Game result buttons
+            document.getElementById('rematchBtn').addEventListener('click', () => {
+                document.getElementById('gameResultModal').style.display = 'none';
+                if (activeGameType) {
+                    initGameByType(activeGameType);
+                }
+            });
+            
+            document.getElementById('returnToLobbyBtn').addEventListener('click', () => {
+                document.getElementById('gameResultModal').style.display = 'none';
+                document.querySelector('.nav-tabs a[href="#multiplayer"]').click();
+
+            });
+            
+            // Legal links
+            document.querySelectorAll('#footerPrivacy, #footerTerms, #footerResponsible, #footerCookies').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const title = this.textContent;
+                    showLegalModal(title, `Full content for ${title} would be displayed here...`);
+                });
+            });
+            
+            // Other buttons
+            document.getElementById('startChatBtn').addEventListener('click', startLiveChat);
+
+            document.getElementById('faqBtn').addEventListener('click', showFAQ);
+            document.getElementById('transactionHistoryBtn').addEventListener('click', showTransactionHistory);
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        
+        // Initialize user data from localStorage
+        function initUserData() {
+            const savedUser = localStorage.getItem('boardgames_user');
+            const savedBalance = localStorage.getItem('boardgames_balance');
+            
+            if (savedUser) {
+                try {
+                    user = JSON.parse(savedUser);
+                    userBalance = savedBalance ? parseFloat(savedBalance) : 0;
+                    updateUserUI();
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                    localStorage.removeItem('boardgames_user');
+
+                    localStorage.removeItem('boardgames_balance');
+                    localStorage.removeItem('token');
+                }
+            }
+        }
+        
+        // Check online status
+        function checkOnlineStatus() {
+            // Check if browser is online
+            isOnline = navigator.onLine;
+            updateOnlineStatus(isOnline);
+            
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                isOnline = true;
+                updateOnlineStatus(true);
+                initSocketConnection();
+
+            });
+            
+            window.addEventListener('offline', () => {
+                isOnline = false;
+                updateOnlineStatus(false);
+            });
+        }
+        
+        // Show offline warning
+        function showOfflineWarning() {
+            showNotification('Online features require an internet connection. Please connect to the internet to play multiplayer games.', 'error');
+        }
+        
+        // Show ad for hint
+        function showAdForHint(game) {
+            if (!hintAvailable) {
+                showNotification('You have already used your hint for this game. Start a new game to get another hint.', 'error');
+                return;
+            }
+            
+            currentGame = game;
+            document.getElementById('adModal').style.display = 'flex';
+            
+            // Start countdown
+            let countdown = 5;
+            const countdownElement = document.getElementById('adCountdown');
+            const secondsElement = document.getElementById('countdownSeconds');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = 
+
+countdown;
+                secondsElement.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    // In a real implementation, the ad would finish playing
+                    // For demo, we'll just close the modal and grant the hint
+                    document.getElementById('adModal').style.display = 'none';
+                    grantHint();
+                }
+            }, 1000);
+        }
+        
+        // Grant hint after watching ad
+        function grantHint() {
+            hintAvailable = false;
+
+            
+            // Disable hint button for current game
+            if (currentGame === 'checkers') {
+                const hintBtn = document.getElementById('checkersHintBtn');
+                if (hintBtn) {
+                    hintBtn.disabled = true;
+                    hintBtn.textContent = 'Hint Used';
+                }
+            } else if (currentGame === 'chess') {
+                const hintBtn = document.getElementById('chessHintBtn');
+                if (hintBtn) {
+                    hintBtn.disabled = true;
+                    hintBtn.textContent = 'Hint Used';
+                }
+            } else if (currentGame === 
+
+'tictactoe') {
+                const hintBtn = document.getElementById('tttHintBtn');
+                if (hintBtn) {
+                    hintBtn.disabled = true;
+                    hintBtn.textContent = 'Hint Used';
+                }
+            }
+            
+            // Show hint (in a real implementation, this would show an actual hint)
+            showNotification(`Hint for ${currentGame}: Try to control the center of the board!`, 'info');
+        }
+        
+        // Show puzzles
+        function showPuzzles(game) {
+            showNotification(`Loading ${game} 
+
+puzzles... (This would show puzzles in a real implementation)`, 'info');
+        }
+        
+        // Show login modal
+        function showLoginModal() {
+            if (user) {
+                // User is already logged in, show account info
+                document.querySelector('.nav-tabs a[href="#account"]').click();
+            } else {
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+        }
+        
+        // Register user
+        async function registerUser() {
+            const email = 
+
+document.getElementById('email').value.trim();
+            const ecocash = document.getElementById('ecocash').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Basic validation
+            if (!email || !ecocash || !password || !confirmPassword) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (!email.includes('@') || !email.includes('.')) {
+                showNotification('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+
+                        email: email,
+                        password: password,
+                        phoneNumber: ecocash,
+                        ecocashNumber: ecocash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    // Save user data
+                    user = data.user;
+                    userBalance = data.user.balance || 0;
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('boardgames_user', JSON.stringify(user));
+                    
+
+localStorage.setItem('boardgames_balance', userBalance.toString());
+                    
+                    // Update UI
+                    updateUserUI();
+                    
+                    // Show success message
+                    showSuccessModal('Registration Successful', 'Your account has been created successfully!');
+                    
+                    // Hide registration form, show account info
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('transactionSection').style.display = 'block';
+                    
+
+document.getElementById('accountInfo').style.display = 'block';
+                    
+                    // Authenticate socket
+                    if (socket && socket.connected) {
+                        socket.emit('authenticate', { token: data.token, userId: user._id });
+                    }
+                } else {
+                    showNotification(data.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+
+        
+        // Login user
+        async function loginUser() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Basic validation
+            if (!email || !password) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    // Save user data
+                    user = data.user;
+                    userBalance = data.user.balance || 0;
+                    localStorage.setItem('token', data.token);
+                    
+
+localStorage.setItem('boardgames_user', JSON.stringify(user));
+                    localStorage.setItem('boardgames_balance', userBalance.toString());
+                    
+                    // Update UI
+                    updateUserUI();
+                    
+                    // Close modal
+                    document.getElementById('loginModal').style.display = 'none';
+                    
+                    // Show success message
+                    showSuccessModal('Login Successful', `Welcome back, ${email}!`);
+                    
+                    // Authenticate socket
+                    if (socket && socket.connected) {
+
+                        socket.emit('authenticate', { token: data.token, userId: user._id });
+                    }
+                    
+                    // Load public games if on multiplayer tab
+                    if (currentTab === 'multiplayer') {
+                        loadPublicGames();
+                    }
+                } else {
+                    showNotification(data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+
+        // Logout user
+        function logoutUser() {
+            user = null;
+            userBalance = 0;
+            localStorage.removeItem('boardgames_user');
+            localStorage.removeItem('boardgames_balance');
+            localStorage.removeItem('token');
+            
+            // Update UI
+            updateUserUI();
+            
+            // Show login form again
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('transactionSection').style.display = 'none';
+            document.getElementById('accountInfo').style.display = 'none';
+            
+            // Leave any multiplayer games
+            if (currentMultiplayerGame && socket) {
+                socket.emit('leaveGame', {
+                    gameCode: currentMultiplayerGame.gameCode,
+                    userId: user ? user._id : null
+                });
+                currentMultiplayerGame = null;
+            }
+            
+            showNotification('Logged out successfully', 'success');
+        }
+        
+        // Update user UI
+
+        function updateUserUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const balanceElement = document.getElementById('userBalance');
+            const bettingBalanceElement = document.getElementById('bettingBalance');
+            
+            if (user) {
+                loginBtn.textContent = 'My Account';
+                balanceElement.textContent = `$${userBalance.toFixed(2)}`;
+                bettingBalanceElement.textContent = `$${userBalance.toFixed(2)}`;
+                
+                // Update account info
+                document.getElementById('displayEmail').t
+
+extContent = user.email;
+                document.getElementById('displayEcocash').textContent = user.ecocashNumber || user.phoneNumber;
+                document.getElementById('memberSince').textContent = new Date(user.createdAt).toLocaleDateString();
+                document.getElementById('totalAccountGames').textContent = (user.totalWins || 0) + (user.totalLosses || 0);
+                document.getElementById('totalWins').textContent = user.totalWins || 0;
+                document.getElementById('totalLosses').textContent = user.totalLosses || 0;
+                
+                // Show account info in account 
+
+tab
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('transactionSection').style.display = 'block';
+                document.getElementById('accountInfo').style.display = 'block';
+                
+                // Update betting stats
+                updateBettingStats();
+            } else {
+                loginBtn.textContent = 'Login / Register';
+                balanceElement.textContent = '$0.00';
+                bettingBalanceElement.textContent = '$0.00';
+
+                
+                // Show login form in account tab
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('transactionSection').style.display = 'none';
+                document.getElementById('accountInfo').style.display = 'none';
+            }
+        }
+        
+        // Show deposit form
+        function showDepositForm() {
+            if (!user) {
+                showLoginModal();
+                return;
+            }
+            
+
+            document.querySelector('.nav-tabs a[href="#account"]').click();
+            document.querySelector('.transaction-tab[data-transaction="deposit"]').click();
+        }
+        
+        // Show withdraw form
+        function showWithdrawForm() {
+            if (!user) {
+                showLoginModal();
+                return;
+            }
+            
+            if (userBalance < 10) {
+                showNotification('You need at least $10 to withdraw funds', 'error');
+                return;
+            }
+            
+            document.querySelector('.nav-tabs a[href="#account"]').click();
+            document.querySelector('.transaction-tab[data-transaction="withdraw"]').click();
+        }
+        
+        // Process deposit
+        async function processDeposit() {
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const phoneNumber = document.getElementById('ecocashDeposit').value.trim();
+            
+            if (!amount || amount < 5) {
+                showNotification('Minimum deposit is $5', 'error');
+                return;
+            }
+            
+
+            if (!phoneNumber || phoneNumber.length < 10) {
+                showNotification('Please enter a valid EcoCash number', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/payments/deposit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+
+                        phoneNumber: phoneNumber
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update user balance
+                    userBalance += amount;
+                    localStorage.setItem('boardgames_balance', userBalance.toString());
+                    
+                    // Update UI
+                    updateUserUI();
+                    
+                    showSuccessModal('Deposit Successful', `$${amount.toFixed(2)} has been added to your account.`);
+                    
+
+                    // Reset form
+                    document.getElementById('depositAmount').value = '';
+                } else {
+                    showNotification(data.message || 'Deposit failed', 'error');
+                }
+            } catch (error) {
+                console.error('Deposit error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+        // Process withdrawal
+        async function processWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const phoneNumber = document.getElementById('withdrawEcocash').value.trim();
+            
+            if (!amount || amount < 10) {
+                showNotification('Minimum withdrawal is $10', 'error');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                showNotification('Insufficient funds', 'error');
+                return;
+            }
+            
+            if (!phoneNumber || phoneNumber.length < 10) {
+                showNotification('Please enter a valid EcoCash number', 'error');
+
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/payments/withdraw`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        phoneNumber: phoneNumber
+                    })
+                });
+                
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update user balance
+                    userBalance -= amount;
+                    localStorage.setItem('boardgames_balance', userBalance.toString());
+                    
+                    // Update UI
+                    updateUserUI();
+                    
+                    showSuccessModal('Withdrawal Requested', `Your withdrawal of $${amount.toFixed(2)} has been submitted. Funds will arrive in 24-48 hours.`);
+                    
+                    // Reset form
+                    
+
+document.getElementById('withdrawAmount').value = '';
+                } else {
+                    showNotification(data.message || 'Withdrawal failed', 'error');
+                }
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+        // Create multiplayer game
+        async function createMultiplayerGame() {
+            if (!user) {
+                showLoginModal();
+                return;
+
+            }
+            
+            if (!isOnline) {
+                showOfflineWarning();
+                return;
+            }
+            
+            const gameType = document.getElementById('gameType').value;
+            const timeControl = parseInt(document.getElementById('timeControl').value);
+            
+            // Get selected bet amount
+            const selectedBet = document.querySelector('.bet-btn.active');
+            const betAmount = selectedBet ? parseInt(selectedBet.dataset.amount) : 0;
+            
+            if (betAmount > 0 && betAmount > 
+
+userBalance) {
+                showNotification('Insufficient funds for this bet', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/multiplayer/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        gameType: gameType,
+                        betAmount: betAmount,
+
+                        timeControl: timeControl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store game info
+                    currentMultiplayerGame = data.game;
+                    activeGameType = gameType;
+                    
+                    // Generate game code
+                    const gameCode = data.game.gameCode || generateGameCode();
+                    
+                    // Show game code modal
+                    document.getElementById('modalGameCode').textContent = gameCode;
+                    document.getElementById('modalCodeDisplay').textContent = gameCode;
+                    document.getElementById('gameCodeModal').style.display = 'flex';
+                    document.getElementById('modalWaitingSpinner').style.display = 'block';
+                    
+                    // Also show in multiplayer tab
+                    document.getElementById('gameCodeDisplay').textContent = gameCode;
+                    document.getElementById('gameCodeSection').style.display = 'block';
+                    document.getElementById('waitingSpinner').style.display = 'block';
+
+                    
+                    // Join socket room
+                    if (socket) {
+                        socket.emit('joinGame', {
+                            gameCode: gameCode,
+                            userId: user._id
+                        });
+                    }
+                    
+                    // Switch to the game tab after a short delay
+                    setTimeout(() => {
+                        document.querySelector('.nav-tabs a[href="#' + gameType + '"]').click();
+                        showNotification('Game created! Share the code with your opponent.', 'success');
+                    }, 2000);
+                    
+                } else {
+
+                    showNotification(data.message || 'Failed to create game', 'error');
+                }
+            } catch (error) {
+                console.error('Create game error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+        // Join multiplayer game
+        async function joinMultiplayerGame() {
+            if (!user) {
+                showLoginModal();
+                return;
+            }
+            
+            if (!isOnline) {
+                showOfflineWarning();
+
+                return;
+            }
+            
+            const gameCode = document.getElementById('joinGameCode').value.trim().toUpperCase();
+            
+            if (!gameCode || gameCode.length !== 8) {
+                showNotification('Please enter a valid 8-character game code', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/multiplayer/join`, {
+                    method: 'POST',
+                    headers: {
+
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ gameCode: gameCode })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store game info
+                    currentMultiplayerGame = data.game;
+                    activeGameType = data.game.gameType;
+                    
+                    // Join socket room
+                    if (socket) {
+
+                        socket.emit('joinGame', {
+                            gameCode: gameCode,
+                            userId: user._id
+                        });
+                    }
+                    
+                    // Switch to the game tab
+                    document.querySelector('.nav-tabs a[href="#' + data.game.gameType + '"]').click();
+                    
+                    showNotification(`Joined game: ${gameCode}`, 'success');
+                    
+                    // Clear input
+                    document.getElementById('joinGameCode').value = '';
+                } else {
+                    showNotification(data.message || 'Failed to join game', 'error');
+                }
+            } catch (error) {
+                console.error('Join game error:', error);
+                showNotification('Network error. Please try again.', 'error');
+            }
+        }
+        
+        // Load public games
+        async function loadPublicGames() {
+            if (!isOnline || !user) {
+                showOfflineWarning();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('publicGamesLoading');
+            const contentElement = 
+
+document.getElementById('publicGamesContent');
+            const noGamesMessage = document.getElementById('noGamesMessage');
+            
+            loadingElement.style.display = 'block';
+            contentElement.innerHTML = '';
+            noGamesMessage.style.display = 'none';
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/multiplayer/public`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+
+                    }
+                });
+                
+                const data = await response.json();
+                loadingElement.style.display = 'none';
+                
+                if (data.success && data.games && data.games.length > 0) {
+                    noGamesMessage.style.display = 'none';
+                    
+                    data.games.forEach(game => {
+                        const gameElement = document.createElement('div');
+                        gameElement.className = 'public-game-item';
+                        gameElement.style.padding = '10px';
+                        
+
+gameElement.style.borderBottom = '1px solid #eee';
+                        gameElement.style.cursor = 'pointer';
+                        
+                        gameElement.innerHTML = `
+                            <strong>${game.gameType.toUpperCase()}</strong> • 
+                            ${game.timeControl || 10} min • 
+                            ${game.betAmount > 0 ? `$${game.betAmount} bet` : 'No bet'} • 
+                            ${game.players.length}/2 players
+                            <button class="btn" style="float: right; padding: 5px 10px; font-size: 0.9rem;" 
+                                    onclick="joinPublicGame('${game.gameCode}')">
+
+                                Join
+                            </button>
+                        `;
+                        
+                        contentElement.appendChild(gameElement);
+                    });
+                } else {
+                    noGamesMessage.style.display = 'block';
+                    noGamesMessage.textContent = 'No public games available';
+                }
+            } catch (error) {
+                console.error('Load public games error:', error);
+                loadingElement.style.display = 'none';
+                noGamesMessage.style.display = 'block';
+
+                noGamesMessage.textContent = 'Error loading games';
+            }
+        }
+        
+        // Join public game
+        async function joinPublicGame(gameCode) {
+            document.getElementById('joinGameCode').value = gameCode;
+            joinMultiplayerGame();
+        }
+        
+        // Copy game code to clipboard
+        function copyGameCode() {
+            const gameCode = document.getElementById('modalGameCode').textContent;
+            
+            // Use Clipboard API if available
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(gameCode).then(() => {
+                    showNotification('Game code copied to clipboard!', 'success');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(gameCode);
+                });
+            } else {
+                fallbackCopyTextToClipboard(gameCode);
+            }
+        }
+        
+        // Fallback copy method for older browsers
+        function 
+
+fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showNotification('Game code copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showNotification('Failed to copy game code', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+
+        }
+        
+        // Start game with AI instead of waiting
+        function startGameWithAI() {
+            document.getElementById('gameCodeModal').style.display = 'none';
+            document.getElementById('gameCodeSection').style.display = 'none';
+            
+            // Switch to the appropriate game tab
+            if (activeGameType) {
+                document.querySelector('.nav-tabs a[href="#' + activeGameType + '"]').click();
+                gameModes[activeGameType] = 'ai';
+                
+
+updateModeButtons(activeGameType, 'ai');
+                initGameByType(activeGameType);
+            }
+            
+            showNotification('Starting game against AI...', 'info');
+        }
+        
+        // Initialize game by type
+        function initGameByType(gameType) {
+            if (gameType === 'checkers') {
+                initCheckersGame();
+            } else if (gameType === 'chess') {
+                initChessGame();
+            } else if (gameType === 'tictactoe') {
+                initTTTGame();
+            }
+        }
+        
+        // Cancel multiplayer game
+
+        function cancelMultiplayerGame() {
+            if (currentMultiplayerGame && socket) {
+                socket.emit('leaveGame', {
+                    gameCode: currentMultiplayerGame.gameCode,
+                    userId: user ? user._id : null
+                });
+            }
+            
+            document.getElementById('gameCodeModal').style.display = 'none';
+            document.getElementById('gameCodeSection').style.display = 'none';
+            currentMultiplayerGame = null;
+            activeGameType = null;
+            
+            showNotification('Game cancelled', 'info');
+
+        }
+        
+        // Player ready for multiplayer game
+        function playerReady(gameType) {
+            if (!currentMultiplayerGame || !socket) return;
+            
+            const readyBtn = document.getElementById(`${gameType}ReadyBtn`);
+            const isReady = readyBtn.textContent === 'Ready';
+            
+            socket.emit('playerReady', {
+                gameCode: currentMultiplayerGame.gameCode,
+                userId: user._id,
+                ready: !isReady
+            });
+            
+            readyBtn.textContent = isReady ? 
+
+'Not Ready' : 'Ready';
+            document.getElementById(`${gameType}Player1Status`).textContent = isReady ? 'Waiting...' : 'Ready';
+            document.getElementById(`${gameType}Player1Status`).className = isReady ? 'player-waiting' : 'player-ready';
+        }
+        
+        // Send chat message
+        function sendChatMessage(gameType) {
+            if (!currentMultiplayerGame || !socket) return;
+            
+            const input = document.getElementById(`${gameType}ChatInput`);
+            const message = input.value.trim();
+            
+            if (message) {
+
+                socket.emit('sendMessage', {
+                    gameCode: currentMultiplayerGame.gameCode,
+                    userId: user._id,
+                    message: message
+                });
+                
+                // Add message to chat
+                addChatMessage(user._id, message, new Date(), false);
+                
+                // Clear input
+                input.value = '';
+            }
+        }
+        
+        // Add chat message
+        function addChatMessage(userId, message, timestamp, isOther = true) {
+            if (!activeGameType) return;
+            
+
+            const messagesContainer = document.getElementById(`${activeGameType}ChatMessages`);
+            const messageElement = document.createElement('div');
+            
+            messageElement.className = `chat-message ${isOther ? 'other' : 'self'}`;
+            messageElement.innerHTML = `
+                <strong>${isOther ? 'Opponent' : 'You'}:</strong> ${message}
+                <div style="font-size: 0.8rem; opacity: 0.7;">
+                    ${new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Update game lobby
+        function updateGameLobby(data) {
+            if (!activeGameType) return;
+            
+            const lobby = document.getElementById(`${activeGameType}Lobby`);
+            const chat = document.getElementById(`${activeGameType}Chat`);
+            
+            if (lobby) lobby.style.display = 'block';
+            if (chat) chat.style.display = 'block';
+            
+            // Update player status
+            data.players.forEach(player => {
+
+                if (player.userId && player.userId.toString() === user._id) {
+                    document.getElementById(`${activeGameType}Player1Status`).textContent = player.ready ? 'Ready' : 'Waiting...';
+                    document.getElementById(`${activeGameType}Player1Status`).className = player.ready ? 'player-ready' : 'player-waiting';
+                    
+                    const readyBtn = document.getElementById(`${activeGameType}ReadyBtn`);
+                    if (readyBtn) {
+                        readyBtn.textContent = player.ready ? 'Not Ready' : 'Ready';
+                    }
+                } else {
+                    document.getElementById(`${activeGameType}
+
+Player2Status`).textContent = player.ready ? 'Ready' : 'Waiting for player...';
+                    document.getElementById(`${activeGameType}Player2Status`).className = player.ready ? 'player-ready' : 'player-waiting';
+                }
+            });
+        }
+        
+        // Update player status
+        function updatePlayerStatus(data) {
+            if (!activeGameType) return;
+            
+            if (data.playerId === user._id) {
+                document.getElementById(`${activeGameType}Player1Status`).textContent = data.ready ? 'Ready' : 'Waiting...';
+                document.getElementById(`${activeGameType}
+
+Player1Status`).className = data.ready ? 'player-ready' : 'player-waiting';
+            } else {
+                document.getElementById(`${activeGameType}Player2Status`).textContent = data.ready ? 'Ready' : 'Waiting...';
+                document.getElementById(`${activeGameType}Player2Status`).className = data.ready ? 'player-ready' : 'player-waiting';
+            }
+        }
+        
+        // Start multiplayer game
+        function startMultiplayerGame(data) {
+            if (!activeGameType) return;
+            
+            // Hide lobby
+            const lobby = document.getElementById(`$
+
+{activeGameType}Lobby`);
+            if (lobby) lobby.style.display = 'none';
+            
+            // Update game mode
+            gameModes[activeGameType] = 'online';
+            updateModeButtons(activeGameType, 'online');
+            
+            // Initialize board with game state
+            if (data.initialState) {
+                // In a real implementation, you would render the board based on initialState
+                console.log('Game started with state:', data.initialState);
+            }
+            
+            showNotification('Game started!', 'success');
+
+        }
+        
+        // Update game board with move
+        function updateGameBoard(data) {
+            if (!activeGameType) return;
+            
+            // In a real implementation, you would update the board based on data.newState
+            console.log('Updating board with move:', data);
+            
+            // Update turn indicator
+            if (activeGameType === 'checkers') {
+                document.getElementById('checkersTurn').textContent = data.player === 1 ? 'Red' : 'Black';
+            } else if (activeGameType === 'chess') {
+                
+
+document.getElementById('chessTurn').textContent = data.player === 1 ? 'White' : 'Black';
+            } else if (activeGameType === 'tictactoe') {
+                document.getElementById('tttTurn').textContent = data.player === 1 ? 'X' : 'O';
+            }
+        }
+        
+        // End multiplayer game
+        function endMultiplayerGame(data) {
+            if (!activeGameType) return;
+            
+            // Show result modal
+            const resultModal = document.getElementById('gameResultModal');
+            const resultIcon = document.getElementById('resultIcon');
+
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const prizeContainer = document.getElementById('prizeContainer');
+            const prizeAmount = document.getElementById('prizeAmount');
+            
+            const isWinner = data.winner === user._id;
+            const isDraw = data.result === 'draw';
+            
+            if (isWinner) {
+                resultIcon.className = 'fas fa-trophy win-result';
+                resultTitle.textContent = 'You Win!';
+
+                resultMessage.textContent = 'Congratulations on your victory!';
+                
+                // Show prize if there was a bet
+                if (currentMultiplayerGame && currentMultiplayerGame.betAmount > 0) {
+                    const prize = currentMultiplayerGame.betAmount * 2 * 0.95; // 5% commission
+                    prizeContainer.style.display = 'block';
+                    prizeAmount.textContent = `$${prize.toFixed(2)}`;
+                    
+                    // Update user balance
+                    userBalance += prize;
+                    localStorage.setItem('boardgames_balance', userBalance.toString());
+                    updateUserUI();
+                }
+
+            } else if (isDraw) {
+                resultIcon.className = 'fas fa-handshake draw-result';
+                resultTitle.textContent = 'Draw!';
+                resultMessage.textContent = 'The game ended in a draw.';
+                prizeContainer.style.display = 'none';
+            } else {
+                resultIcon.className = 'fas fa-times loss-result';
+                resultTitle.textContent = 'You Lose!';
+                resultMessage.textContent = 'Better luck next time!';
+                prizeContainer.style.display = 'none';
+            }
+            
+            resultModal.style.display = 'flex';
+            
+
+            // Reset game state
+            currentMultiplayerGame = null;
+            gameModes[activeGameType] = 'ai';
+            updateModeButtons(activeGameType, 'ai');
+        }
+        
+        // Show game result
+        function showGameResult(result, gameName) {
+            const resultModal = document.getElementById('gameResultModal');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const prizeContainer = 
+
+document.getElementById('prizeContainer');
+            
+            if (result === 'win') {
+                resultIcon.className = 'fas fa-trophy win-result';
+                resultTitle.textContent = 'You Win!';
+                resultMessage.textContent = `Congratulations! You won the ${gameName} game.`;
+            } else if (result === 'loss') {
+                resultIcon.className = 'fas fa-times loss-result';
+                resultTitle.textContent = 'You Lose!';
+                resultMessage.textContent = `Better luck next time in ${gameName}!`;
+            } else {
+                resultIcon.className = 'fas fa-handshake draw-result';
+
+                resultTitle.textContent = 'Draw!';
+                resultMessage.textContent = `The ${gameName} game ended in a draw.`;
+            }
+            
+            prizeContainer.style.display = 'none';
+            resultModal.style.display = 'flex';
+        }
+        
+        // Send contact message
+        function sendContactMessage() {
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const message = document.getElementById('contactMessage').value.trim();
+            
+
+            if (!name || !email || !message) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // In a real implementation, this would send the message to a server
+            console.log(`Contact message from ${name} (${email}): ${message}`);
+            
+            showSuccessModal('Message Sent', 'Thank you for your message. We will respond within 24 hours.');
+            
+            // Clear form
+            document.getElementById('contactName').value = '';
+            document.getElementById('contactEmail').
+
+value = '';
+            document.getElementById('contactMessage').value = '';
+        }
+        
+        // Show legal modal
+        function showLegalModal(title, content) {
+            // For demo, we'll just show an alert
+            alert(`${title}\n\n${content}`);
+        }
+        
+        // Start live chat
+        function startLiveChat() {
+            showNotification('Live chat would open in a real implementation. For now, please use email or phone support.', 'info');
+        }
+        
+        // Show FAQ
+
+        function showFAQ() {
+            alert('FAQ would open in a real implementation. Common questions:\n\n1. How do I register?\n2. How do I deposit funds?\n3. How do I play multiplayer games?\n4. What are the game rules?\n5. How do I withdraw my winnings?');
+        }
+        
+        // Show transaction history
+        function showTransactionHistory() {
+            if (!user) {
+                showLoginModal();
+                return;
+            }
+            
+            showNotification('Transaction history would open in a real implementation.', 'info');
+        }
+
+        
+        // Show success modal
+        function showSuccessModal(title, message) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background-color: ${type === 'error' ? '#f8d7da' : type === 'success' ? '#d4edda' : '#d1ecf1'};
+                color: ${type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#0c5460'};
+                border: 1px solid ${type === 'error' ? '#f5c6cb' : type === 'success' ? '#c3e6cb' : '#bee5eb'};
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow);
+                z-index: 10000;
+                max-width: 300px;
+                animation: slideIn 0.3s ease;
+
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Add CSS for animations
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+
+                    @keyframes slideOut {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        // Generate random game code
+        function generateGameCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * 
+
+chars.length));
+            }
+            return code;
+        }
+        
+        // Update betting stats
+        function updateBettingStats() {
+            // In a real implementation, these would come from the server
+            if (user) {
+                document.getElementById('totalWinnings').textContent = `$${(user.totalEarnings || 0).toFixed(2)}`;
+                document.getElementById('totalGames').textContent = (user.totalWins || 0) + (user.totalLosses || 0);
+                
+                // Update account stats
+                
+
+document.getElementById('totalAccountGames').textContent = (user.totalWins || 0) + (user.totalLosses || 0);
+                document.getElementById('totalWins').textContent = user.totalWins || 0;
+                document.getElementById('totalLosses').textContent = user.totalLosses || 0;
+            }
+        }
+    </script>
+</body>
+</html>
